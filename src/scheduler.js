@@ -26,7 +26,7 @@ async function doPost (action) {
     )
     log(`[${getRandomImagePath()}] Get ✅`)
   } catch (err) {
-    log(`[${action}] Failed ❌:`, err?.response?.status || err.message)
+    console.log(`[${action}] Failed ❌:`, err?.response?.status || err.message)
   }
 }
 
