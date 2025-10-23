@@ -1,0 +1,98 @@
+# Node modules
+node_modules/
+.pnp/
+.pnp.js
+
+# Environment files
+.env
+.env.*.local
+.env.local
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+logs/
+*.log
+logs/*.log
+
+# Runtime data
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage
+coverage/
+.nyc_output/
+
+# Build / output
+dist/
+build/
+out/
+coverage/
+.cache/
+.next/
+.nuxt/
+.vite/
+.rpt2_cache/
+parcel-bundler-cache/
+.esbuild/
+
+# Temporary
+tmp/
+temp/
+*.tmp
+*.temp
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor / IDE
+.vscode/
+.idea/
+*.sublime-workspace
+*.sublime-project
+
+# TypeScript
+*.tsbuildinfo
+
+# Tests
+coverage/
+jest-cache/
+playwright-report/
+
+# Lockfiles that should NOT be ignored:
+# (keep lockfiles for reproducible installs)
+# package-lock.json
+# yarn.lock
+# pnpm-lock.yaml
+
+# Misc
+*.tgz
+.cache/
+.terraform/
+*.local
+
+# Secrets / tokens / uploads
+token.json
+*.pem
+*.key
+*.crt
+uploads/
+tmp_uploads/
+
+# Docker
+docker-compose.override.yml
+.dockerignore
+
+# Mac / Linux swap
+.*.swp
+*~
+
+
+token.json
