@@ -88,7 +88,6 @@ tmp_uploads/
 
 # Docker
 docker-compose.override.yml
-.dockerignore
 
 # Mac / Linux swap
 .*.swp
