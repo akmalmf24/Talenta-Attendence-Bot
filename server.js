@@ -51,7 +51,7 @@ async function startApp() {
 
       let response = "Schedule is running"
 
-      if (scheduler == nul) {
+      if (scheduler == null) {
         response = "Schedule is stop"
       }
 
