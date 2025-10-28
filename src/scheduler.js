@@ -1,44 +1,36 @@
 import cron from 'node-cron'
 import { config } from './config.js'
-import { safeRequest, safeMultipart } from './apiClient.js'
-import { getRandomImagePath } from './randomImage.js'
 import { ensureValidTokenData } from './auth.js'
 import { log } from './logger.js'
+import { getCurrentShift, submitAttendance } from './talentaService.js'
+import dayjs from 'dayjs'
 
-async function doPost (action) {
-  log(`Start action: ${action} at ${new Date().toLocaleTimeString()}`)
+
+export async function doPost(action) {
   try {
-    // Example: if you want to send JSON
-    await safeMultipart(
-      `/employees/personal/formal-education/543424`,
-      {
-        score: '3.82',
-        year_from: '2020',
-        majors: 'Teknik Informatika',
-        filename: 'E-GrQsI2C6RzWn3F0mRvLsGzRjxpR3VS.pdf',
-        year_to: '2024',
-        institution_name: 'Universitas Telkom',
-        education_degree: '80',
-        certification: 'true'
-      },
-      null,
-      'PUT'
-    )
-    log(`[${getRandomImagePath()}] Get ✅`)
+    const today = dayjs().format('YYYY-MM-DD')
+    const shift = await getCurrentShift(today)
+    log(`Start action: ${action} at ${new Date().toLocaleTimeString()} on shift ${shift.name} (${shift.id})`)
+
+    let event = "clock_in"
+    if (action == "CLOCK_OUT") {
+      event = "clock_out"
+    }
+    await submitAttendance(shift.id, shift.setting_id, today, event)
   } catch (err) {
-    console.log(`[${action}] Failed ❌:`, err?.response?.status || err.message)
+    console.log(`[${action}] Failed ❌:`, err)
   }
 }
 
-function getDelaySecondsFor (action) {
-  if (action === 'CLOCK_IN') return Math.floor(Math.random() * 301) // 0..300s
+function getDelaySecondsFor(action) {
+  if (action === 'CLOCK_IN') return Math.floor(Math.random() * 1) // 0..300s
   if (action === 'CLOCK_OUT') return Math.floor(Math.random() * 301) + 300 // 300..600s
   return 0
 }
 
 function scheduleJob(time, action) {
   const [hour, minute] = time.split(':')
-  const cronTime = `${minute} ${hour} * * 1-5` // Senin–Jumat
+  const cronTime = `${minute} ${hour} * * 1-5` // Monday - Friday
 
   const job = cron.schedule(
     cronTime,
@@ -53,7 +45,7 @@ function scheduleJob(time, action) {
   return job
 }
 
-export async function initScheduler () {
+export async function initScheduler() {
   log('=== Starting Scheduler ===')
 
   await ensureValidTokenData()

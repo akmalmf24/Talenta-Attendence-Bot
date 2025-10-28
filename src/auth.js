@@ -1,7 +1,7 @@
 import axios from 'axios'
 import jwt from 'jsonwebtoken'
 import { config } from './config.js'
-import { loadTokenData, saveTokenData, clearTokenData } from './tokenManager.js'
+import { loadTokenData, saveTokenData } from './tokenManager.js'
 import { log } from './logger.js'
 
 // axios instance untuk auth (NO interceptors) — prevents recursion
@@ -23,7 +23,7 @@ function isAccessExpired(accessToken) {
 
 export async function login() {
   log('[AUTH] Logging in...')
-  const res = await authAxios.post(config.LOGIN_ENDPOINT, config.USER_CREDENTIAL)
+  const res = await authAxios.post("/v1/login", config.USER_CREDENTIAL)
   const tokens = res.data
   saveTokenData(tokens.data)
   log('[AUTH] Logged in ✅')
@@ -34,7 +34,7 @@ export async function refresh(refreshToken) {
   if (!refreshToken) return null
   log('[AUTH] Refreshing token...')
   try {
-    const res = await authAxios.post(config.REFRESH_PATH, { refresh_token: refreshToken })
+    const res = await authAxios.post("/v1/oauth2/token", { refresh_token: refreshToken })
     const newTokens = res.data
     saveTokenData(newTokens)
     log('[AUTH] Refreshed ✅')

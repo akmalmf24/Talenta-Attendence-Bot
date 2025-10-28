@@ -1,17 +1,23 @@
 import http from 'http'
 import { initScheduler } from './src/scheduler.js'
 import { getLogs, log } from './src/logger.js'
+import { getCompanyId } from './src/talentaService.js'
 
 const PORT = process.env.PORT || 3000
 let scheduler = null
 
-async function startApp () {
+async function startApp() {
   console.log('=== Starting Attendance Scheduler ===')
   scheduler = await initScheduler()
 
   http
     .createServer(async (req, res) => {
       res.writeHead(200, { 'Content-Type': 'text/plain' })
+
+      if (req.url === "/company") {
+        const company = await getCompanyId()
+        res.end(JSON.stringify(company))
+      }
 
       if (req.url === '/logs') {
         const data = getLogs().join('\n')
@@ -43,7 +49,13 @@ async function startApp () {
         return
       }
 
-      res.end('Server is running\n')
+      let response = "Schedule is running"
+
+      if (scheduler == nul) {
+        response = "Schedule is stop"
+      }
+
+      res.end(`${response}\n`)
     })
     .listen(PORT, () => {
       console.log(`HTTP server running on port ${PORT}`)

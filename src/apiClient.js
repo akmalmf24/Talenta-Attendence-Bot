@@ -1,9 +1,13 @@
 import axios from 'axios'
-import FormData from 'form-data'
+import { FormData } from 'formdata-node'
+import { fileFromPath } from 'formdata-node/file-from-path'
+
 import fs from 'fs'
 import { config } from './config.js'
 import { loadTokenData, saveTokenData } from './tokenManager.js'
 import { refresh as authRefresh, login as authLogin } from './auth.js'
+import mime from 'mime'
+import path from 'path'
 
 // main API axios (has interceptor)
 export const api = axios.create({
@@ -94,32 +98,91 @@ api.interceptors.response.use(
  */
 export async function safeRequest(url, data = {}, method = 'post') {
   const m = method.toLowerCase()
-  return api.request({ url, method: m, data })
-}
 
+  const config = {
+    url,
+    method: m
+  }
+
+  if (m === 'get' || m === 'delete') {
+    config.params = data
+  } else {
+    config.data = data
+  }
+
+  return api.request(config)
+}
 /**
  * safeMultipart: multipart upload with method dynamic
  */
-export async function safeMultipart(url, extraFields = {}, filePath = null, method = 'post') {
+export async function safeMultipart(url, options = {}) {
+  const {
+    fields = {},
+    filePath = null,
+    method = 'POST',
+    headers = {},
+    fileFieldName = 'file'
+  } = options
+
   const form = new FormData()
 
   if (filePath) {
-    form.append('file', fs.createReadStream(filePath))
+    const isCloudinaryObject = typeof filePath === 'object' && filePath.url && filePath.filename
+
+    if (isCloudinaryObject) {
+      const res = await axios.get(filePath.url, { responseType: 'arraybuffer' })
+      const blob = new Blob([res.data], { type: res.headers['content-type'] })
+      form.append(fileFieldName, blob, filePath.filename)
+    } else {
+      if (!fs.existsSync(filePath)) {
+        throw new Error(`File lokal tidak ditemukan: ${filePath}`)
+      }
+      const filename = path.basename(filePath)
+      const mimetype = mime.getType(filePath)
+
+      form.append(fileFieldName, fs.createReadStream(filePath), {
+        filename: filename,
+        contentType: mimetype
+      })
+    }
   }
 
-  for (const [k, v] of Object.entries(extraFields || {})) {
+  for (const [k, v] of Object.entries(fields)) {
     form.append(k, v)
-  }
-
-  // Gabung header default axios + form header
-  const headers = {
-    ...form.getHeaders(), // multipart headers
   }
 
   return api.request({
     url,
     method: method.toLowerCase(),
     data: form,
-    headers,
+    headers: {
+      ...headers,
+      ...form.headers,
+    },
+    maxBodyLength: Infinity,
   })
+}
+
+async function getStreamFromUrl(fileUrl) {
+  const res = await axios.get(fileUrl, { responseType: 'stream' })
+
+  let filename = null
+  const cd = res.headers['content-disposition']
+  if (cd) {
+    const match = cd.match(/filename="?(.+?)"?($|;)/)
+    if (match) filename = match[1]
+  }
+
+  if (!filename) {
+    try {
+      const parsed = new URL(fileUrl)
+      filename = path.basename(parsed.pathname) || `file-${Date.now()}`
+    } catch (err) {
+      filename = `file-${Date.now()}`
+    }
+  }
+
+  const contentType = res.headers['content-type'] || undefined
+
+  return { stream: res.data, filename, contentType }
 }
