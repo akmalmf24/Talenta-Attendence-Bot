@@ -23,7 +23,7 @@ export async function doPost(action) {
 }
 
 function getDelaySecondsFor(action) {
-  if (action === 'CLOCK_IN') return Math.floor(Math.random() * 1) // 0..300s
+  if (action === 'CLOCK_IN') return Math.floor(Math.random() * 300) // 0..300s
   if (action === 'CLOCK_OUT') return Math.floor(Math.random() * 301) + 300 // 300..600s
   return 0
 }
