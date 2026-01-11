@@ -2,8 +2,9 @@ import cron from 'node-cron'
 import { config } from './config.js'
 import { ensureValidTokenData } from './auth.js'
 import { log } from './logger.js'
-import { getCurrentShift, submitAttendance } from './talentaService.js'
+import { getCurrentShift, submitAttendance, getAttendance} from './talentaService.js'
 import dayjs from 'dayjs'
+import { sendText } from './whatsapp/sender.js'
 
 
 export async function doPost(action) {
@@ -31,7 +32,7 @@ function getDelaySecondsFor(action) {
 function scheduleJob(time, action) {
   const [hour, minute] = time.split(':')
   const cronTime = `${minute} ${hour} * * 1-5` // Monday - Friday
-
+  
   const job = cron.schedule(
     cronTime,
     () => {
@@ -45,6 +46,31 @@ function scheduleJob(time, action) {
   return job
 }
 
+async function reminderAttendance(time, action){
+  const [hour, minute] = time.split(':')
+  const cronTime = `${minute} ${hour} * * 1-5`
+  const today = dayjs().format('YYYY-MM-DD')
+  const attendance = await getAttendance(today)
+  
+  cron.schedule(
+    cronTime,
+    async () => {
+      if(action == "CLOCK_IN" && !attendance.clock_in){
+        await sendText(
+          '6282115262249@s.whatsapp.net',
+          `Peringatan!!, anda belum clock in!`
+        )
+      } else if(action == "CLOCK_OUT" && !attendance.clock_in) {
+        await sendText(
+          '6282115262249@s.whatsapp.net',
+          `Peringatan!!, anda belum clock out!`
+        )
+      }
+    },
+    { timezone: config.TIMEZONE }
+  )
+}
+
 export async function initScheduler() {
   log('=== Starting Scheduler ===')
 
@@ -52,6 +78,12 @@ export async function initScheduler() {
 
   log(`Scheduler config in: ${config.CLOCK_IN}`)
   log(`Scheduler config out: ${config.CLOCK_OUT}`)
+
+  if(config.REMINDER_WA){
+    reminderAttendance(config.REMINDER_CLOCK_IN, 'CLOCK_IN')
+    reminderAttendance(config.REMINDER_CLOCK_OUT, 'CLOCK_OUT')
+  }
+
   return {
     clockIn: scheduleJob(config.CLOCK_IN, 'CLOCK_IN'),
     clockOut: scheduleJob(config.CLOCK_OUT, 'CLOCK_OUT')

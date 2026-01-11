@@ -2,6 +2,10 @@ import http from 'http'
 import { initScheduler } from './src/scheduler.js'
 import { getLogs, log } from './src/logger.js'
 import { getCompanyId } from './src/talentaService.js'
+import { initWA } from './src/whatsapp/socket.js'
+import { getSocket } from './src/whatsapp/socket.js'
+import { sendText } from './src/whatsapp/sender.js'
+import { config } from './src/config.js'
 
 const PORT = process.env.PORT || 3000
 let scheduler = null
@@ -62,4 +66,75 @@ async function startApp() {
     })
 }
 
+if(config.REMINDER_WA){
+  await initWA()
+
+  const sock = getSocket()
+
+  sock.ev.on('messages.upsert', async ({ messages }) => {
+    const msg = messages[0]
+    if (!msg.message) return
+
+    const from = msg.key.remoteJidAlt
+    const text =
+      msg.message.conversation ||
+      msg.message.extendedTextMessage?.text
+
+    if(from == "6282115262249@s.whatsapp.net"){
+      if (text == '/stop') {
+        if (scheduler == null) {
+          await sendText(
+            '6282115262249@s.whatsapp.net',
+            `Attendance is already stop!`
+          )
+          return
+        }
+
+        scheduler.clockIn.stop()
+        scheduler.clockOut.stop()
+
+        scheduler = null
+        log('Stop schedule manually')
+        await sendText(
+            '6282115262249@s.whatsapp.net',
+            `Attendance stoped!`
+        )
+        return
+      }
+
+      if (text == '/start') {
+        if (scheduler != null) {
+          await sendText(
+            '6282115262249@s.whatsapp.net',
+            `Attendance is already start!`
+          )
+          return
+        }
+        scheduler = await initScheduler()
+        log('Start schedule manually')
+        await sendText(
+            '6282115262249@s.whatsapp.net',
+            `Attendance start!`
+        )
+        return
+      }
+
+
+      if (text == '/status') {
+        if (scheduler != null) {
+          await sendText(
+            '6282115262249@s.whatsapp.net',
+            `Attendance status: running!`
+          )
+          return
+        }
+        await sendText(
+            '6282115262249@s.whatsapp.net',
+            `Attendance status: stoped!`
+        )
+        return
+      }
+    }
+  })
+}
 startApp()

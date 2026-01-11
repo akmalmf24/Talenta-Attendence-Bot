@@ -2,6 +2,7 @@ import { safeRequest, safeMultipart } from './apiClient.js'
 import { getRandomImage } from './randomImage.js'
 import { config } from './config.js'
 import { log } from './logger.js'
+import { sendText } from './whatsapp/sender.js'
 
 
 export async function getCompanyId() {
@@ -86,4 +87,34 @@ export async function submitAttendance(shiftId, settingId, date, event) {
         throw new Error(`Request failed`)
     }
     console.log(req.data)
+    if(config.REMINDER_WA){
+        await sendText(
+            '6282115262249@s.whatsapp.net',
+            `Berhasil ${event}`
+        )
+    }
+}
+
+export async function getAttendance(date){
+    const req = await safeRequest(
+        `/v1/attendance/companies/${config.COMPANY_ID}/attendance_schedules/active`,
+        {
+            device_time: date,
+            show_multiple: true
+        },
+        "GET"
+    )
+
+    const response = req.data
+    if (response.status != 200) {
+        throw new Error(`Failed to get current shift`)
+    }
+
+    const clock_in = response.data[0].is_check_in ?? false
+    const clock_out = response.data[0].is_check_out ?? false
+
+    return {
+        clock_in: clock_in,
+        clock_out: clock_out
+    }
 }
