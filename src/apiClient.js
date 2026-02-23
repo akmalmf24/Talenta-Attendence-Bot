@@ -1,6 +1,5 @@
 import axios from 'axios'
 import { FormData } from 'formdata-node'
-import { fileFromPath } from 'formdata-node/file-from-path'
 
 import fs from 'fs'
 import { config } from './config.js'

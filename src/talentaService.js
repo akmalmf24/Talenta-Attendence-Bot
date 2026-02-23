@@ -2,7 +2,7 @@ import { safeRequest, safeMultipart } from './apiClient.js'
 import { getRandomImage } from './randomImage.js'
 import { config } from './config.js'
 import { log } from './logger.js'
-import { sendText } from './whatsapp/sender.js'
+import { sendText } from './whatsapp.js'
 
 
 export async function getCompanyId() {
@@ -87,15 +87,13 @@ export async function submitAttendance(shiftId, settingId, date, event) {
         throw new Error(`Request failed`)
     }
     console.log(req.data)
-    if(config.REMINDER_WA){
-        await sendText(
-            '6282115262249@s.whatsapp.net',
-            `Berhasil ${event}`
-        )
-    }
+    await sendText(
+        '6282115262249',
+        `Berhasil ${event}`
+    )
 }
 
-export async function getAttendance(date){
+export async function getAttendance(date) {
     const req = await safeRequest(
         `/v1/attendance/companies/${config.COMPANY_ID}/attendance_schedules/active`,
         {

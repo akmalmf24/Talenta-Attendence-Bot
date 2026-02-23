@@ -1,6 +1,5 @@
 import fs from 'fs'
 import path from 'path'
-import { fileURLToPath } from 'url'
 import { v2 as cloudinary } from 'cloudinary'
 
 const USE_CLOUDINARY =
