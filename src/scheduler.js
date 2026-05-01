@@ -50,20 +50,21 @@ function scheduleJob(time, action) {
 async function reminderAttendance(time, action) {
   const [hour, minute] = time.split(':')
   const cronTime = `${minute} ${hour} * * 1-5`
-  const today = dayjs().format('YYYY-MM-DD')
-  const attendance = await getAttendance(today)
-
   cron.schedule(
     cronTime,
     async () => {
+      const today = dayjs().format('YYYY-MM-DD')
+      const attendance = await getAttendance(today)
       if (action == "CLOCK_IN" && !attendance.clock_in) {
+        log("Reminder clockin")
         await sendText(
-          '6282115262249',
+          '1541163367',
           `Peringatan!!, anda belum clock in!`
         )
-      } else if (action == "CLOCK_OUT" && !attendance.clock_in) {
+      } else if (action == "CLOCK_OUT" && !attendance.clock_out) {
+        log("Reminder clockout")
         await sendText(
-          '6282115262249',
+          '1541163367',
           `Peringatan!!, anda belum clock out!`
         )
       }
@@ -83,6 +84,8 @@ export async function initScheduler() {
 
   reminderAttendance(config.REMINDER_CLOCK_IN, 'CLOCK_IN')
   reminderAttendance(config.REMINDER_CLOCK_OUT, 'CLOCK_OUT')
+  log(`Scheduler reminder config in: ${config.REMINDER_CLOCK_IN}`)
+  log(`Scheduler reminder config out: ${config.REMINDER_CLOCK_OUT}`)
 
   return {
     clockIn: scheduleJob(config.CLOCK_IN, 'CLOCK_IN'),

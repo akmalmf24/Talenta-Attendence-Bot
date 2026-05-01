@@ -19,6 +19,7 @@
     "jwt-decode": "^4.0.0",
     "mime": "^4.1.0",
     "mime-types": "^3.0.1",
-    "node-cron": "^4.2.1"
+    "node-cron": "^4.2.1",
+    "p-retry": "^8.0.0"
   }
 }
