@@ -74,7 +74,7 @@ export async function submitAttendance(shiftId, settingId, date, event) {
         const req = await safeMultipart(
             `/v3/attendance/organisations/${config.COMPANY_ID}/attendance_clocks`,
             {
-                // filePath: image,
+                filePath: image,
                 fields: {
                     notes: '',
                     latitude: config.LATITUDE,
